@@ -1,5 +1,6 @@
 use crate::errors::Errcode;
 use crate::ipc::generate_socketpair;
+use crate::hostname::generate_hostname;
 
 use std::ffi::CString; //CString is a C-compatible string (null-terminated).
 use std::path::PathBuf;
@@ -12,7 +13,8 @@ pub struct ContainerOpts {
   pub argv: Vec<CString>,
   pub uid: u32, //The ID of the user inside the container.
   pub fd: RawFd, //The file descriptor
-  pub mount_dir: PathBuf
+  pub mount_dir: PathBuf,
+  pub hostname: String
 }
 
 //Constructor
@@ -30,6 +32,7 @@ impl ContainerOpts {
             uid,
             fd: sockets.1,
             mount_dir,
+            hostname: generate_hostname()?,
         }, 
         sockets)
     )

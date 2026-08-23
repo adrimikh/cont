@@ -34,7 +34,7 @@ pub fn setup_log(level: log::LevelFilter) {
 }
 
 pub fn parse_args() -> Result<Args, Errcode> {
-  let args: Args = Args::from_args();
+  let args: Args = Args::from_args(); //Builds the struct from the command line arguments.
 
   //Check if debug flag is activated.
   if args.debug {
@@ -47,7 +47,6 @@ pub fn parse_args() -> Result<Args, Errcode> {
   if !args.mount_dir.exists() || !args.mount_dir.is_dir() {
     return Err(Errcode::ArgumentInvalid("mount"));
   }
-
 
   Ok(args)
 } 	

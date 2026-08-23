@@ -1,11 +1,14 @@
 use std::os::fd::RawFd;
 
-use crate::{cli::Args, config::ContainerOpts, errors::Errcode::{self, ArgumentInvalid}};
-use nix::{unistd::close, sys::utsname::uname};
+use crate::{child::generate_child_process, cli::Args, config::ContainerOpts, errors::Errcode::{self, ArgumentInvalid}};
+use nix::{libc::pidfd_info, sys::{utsname::uname, wait::waitpid}, unistd::{Pid, close}};
+
+pub const MIN_KERNEL_VERSION: f32 = 4.8;
 
 pub struct Container {
   sockets: (RawFd, RawFd),
   config: ContainerOpts,
+  child_pid: Option<Pid>,
 }
 
 impl Container {
@@ -16,11 +19,13 @@ impl Container {
       args.uid, 
       args.mount_dir)?; 
     
-    Ok(Container { sockets, config })
+    Ok(Container { sockets, config, child_pid: None })
   }
 
   //Handles the creation process.
   pub fn create(&mut self) -> Result<(), Errcode> {
+    let pid = generate_child_process(self.config.clone())?;
+    self.child_pid = Some(pid);
     log::debug!("Creation finished");
     Ok(())
   }
@@ -41,21 +46,6 @@ impl Container {
     Ok(())
   }
 }
-
-pub fn start(args: Args) -> Result<(), Errcode> {
-  check_linux_version()?; //Followed by ? so that the error is immediately returned, else the function's result would be ignored.
-
-  let mut container = Container::new(args)?;
-  if let Err(e) = container.create() {
-    container.clean_exit()?;
-    log::error!("Error while creating container: {:?}", e);
-    return Err(e);
-  }
-  log::debug!("Finished, cleaning & exit");
-  container.clean_exit()
-}
-
-pub const MIN_KERNEL_VERSION: f32 = 4.8;
 
 pub fn check_linux_version() -> Result<(), Errcode> {
   //We retrieve the system's info.
@@ -79,3 +69,33 @@ pub fn check_linux_version() -> Result<(), Errcode> {
   }
   Ok(())
 }
+
+//Parent process execution is suspended until the child process finishes.
+pub fn wait_child(pid: Option<Pid>) -> Result<(), Errcode> {
+  if let Some(child_pid) = pid {
+    log::debug!("Waiting for child (pid {}) to finish", child_pid);
+    if let Err(e) = waitpid(child_pid, None) {
+      log::error!("Error while waiting for pid to finish: {:?}", e);
+      return Err(Errcode::ContainerError(1));
+    }
+  }
+  Ok(())
+}
+
+pub fn start(args: Args) -> Result<(), Errcode> {
+  check_linux_version()?; 
+  let mut container = Container::new(args)?;
+  log::debug!("Container sockets: ({}, {})", container.sockets.0, container.sockets.1);
+
+  if let Err(e) = container.create() {
+    container.clean_exit()?;
+    log::error!("Error while creating container: {:?}", e);
+    return Err(e);
+  }
+  log::debug!("Container child PID: {:?}", container.child_pid);
+  wait_child(container.child_pid)?;
+  log::debug!("Finished, cleaning & exit");
+  container.clean_exit()
+}
+
+

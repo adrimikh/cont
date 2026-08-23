@@ -8,6 +8,7 @@ structopt = "0.3.23"
 log = "0.4.34"
 env_logger = "0.11.11"
 nix = { version = "0.31.3",   
-  features = ["feature", "socket", "process", "sched", "signal"] }
+  features = ["feature", "socket", "process", "sched", "signal", "hostname"] }
 scan_fmt = "0.2.6"
+rand = "0.8.4"
 

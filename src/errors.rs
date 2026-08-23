@@ -12,6 +12,8 @@ pub enum Errcode {
   SocketError(u8),
   ArgumentInvalid(&'static str), //static here means that str must live for the whole program.
   ChildProcessError(u8),
+  HostnameError(u8),
+  RngError
 }
 
 //Impl block because methods can only be defined in impl of enum.

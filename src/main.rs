@@ -4,6 +4,7 @@ mod config;
 mod container;
 mod ipc;
 mod child;
+mod hostname;
 
 use std::process::exit;
 use errors::exit_with_errcode;
