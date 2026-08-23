@@ -7,7 +7,11 @@ use std::process::exit;
 #[derive(Debug)]
 //Enum that contains all possible errors in the program.
 pub enum Errcode {
-    ArgumentInvalid(&'static str), //static here means that str must live for the whole program.
+  ContainerError(u8),
+  NotSupported(u8),
+  SocketError(u8),
+  ArgumentInvalid(&'static str), //static here means that str must live for the whole program.
+  ChildProcessError(u8),
 }
 
 //Impl block because methods can only be defined in impl of enum.

@@ -5,6 +5,9 @@ edition = "2024"
 
 [dependencies]
 structopt = "0.3.23"
-log = "0.4.14"
-env_logger = "0.9.0"
+log = "0.4.34"
+env_logger = "0.11.11"
+nix = { version = "0.31.3",   
+  features = ["feature", "socket", "process", "sched", "signal"] }
+scan_fmt = "0.2.6"
 
