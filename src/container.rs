@@ -1,6 +1,6 @@
 use std::os::fd::RawFd;
 
-use crate::{child::generate_child_process, cli::Args, config::ContainerOpts, errors::Errcode::{self, ArgumentInvalid}};
+use crate::{child::generate_child_process, cli::Args, config::ContainerOpts, errors::Errcode::{self, ArgumentInvalid}, mounts::clean_mounts};
 use nix::{libc::pidfd_info, sys::{utsname::uname, wait::waitpid}, unistd::{Pid, close}};
 
 pub const MIN_KERNEL_VERSION: f32 = 4.8;
@@ -42,6 +42,8 @@ impl Container {
       log::error!("Unable to close read socket: {:?}", e);
       return Err(Errcode::SocketError(4));      
     }
+
+    clean_mounts(&self.config.mount_dir)?;
     
     Ok(())
   }
